@@ -16,15 +16,17 @@ let pageCount = 0;
 let visitedUrlsAmazon = new Set();
 let visitedTitlesAmazon = new Set();
 let pageCountAmazon = 0;
-
+//switch to imdb
 const seedLinks = [
     'https://people.scs.carleton.ca/~davidmckenney/fruitgraph/N-0.html',
-    'https://www.amazon.ca/MAXPOWER-Three-Layer-Multi-Function-Organizer-Dividers/dp/B096TGB757/?_encoding=UTF8&pd_rd_w=Oi4It&content-id=amzn1.sym.0606cc44-75bd-471a-a861-3925e60effe6%3Aamzn1.symc.e5c80209-769f-4ade-a325-2eaec14b8e0e&pf_rd_p=0606cc44-75bd-471a-a861-3925e60effe6&pf_rd_r=25R3BMXYKNB9VJ755MT3&pd_rd_wg=3Hpau&pd_rd_r=91a8964d-6582-4f8c-ae34-6e46187358ad&ref_=pd_gw_ci_mcx_mr_hp_atf_m&th=1'
+    'https://archive.org/details/cdl',
+    // 'https://www.amazon.ca/MAXPOWER-Three-Layer-Multi-Function-Organizer-Dividers/dp/B096TGB757/?_encoding=UTF8&pd_rd_w=Oi4It&content-id=amzn1.sym.0606cc44-75bd-471a-a861-3925e60effe6%3Aamzn1.symc.e5c80209-769f-4ade-a325-2eaec14b8e0e&pf_rd_p=0606cc44-75bd-471a-a861-3925e60effe6&pf_rd_r=25R3BMXYKNB9VJ755MT3&pd_rd_wg=3Hpau&pd_rd_r=91a8964d-6582-4f8c-ae34-6e46187358ad&ref_=pd_gw_ci_mcx_mr_hp_atf_m&th=1'
     // Add more seed links here
   ];
 
 
 let tempCollection =[]
+let tempCollectionAmazon = []
 //keeping a counter that will keep upto date the number of pages I visit
 //let fruitSitePagesCrawled = 0;
 let chosenSitePagesCrawled = 0;
@@ -81,20 +83,43 @@ const crawler = new Crawler({
                 }
             }else{
                 //this will be the other chosen seedLink
-                console.log("THIS IS A RANDOM LINK")
-                console.log(title)
-                if(!visitedUrlsAmazon.has(res.request.uri.href) || !visitedTitlesAmazon.has(title)){
-                    visitedUrlsAmazon.add(res.request.uri.href);
-                    visitedTitlesAmazon.add(title);
-                    console.log(res.$)
-                    const pageDataforAmazon = {
-                        url: res.request.uri.href,
-                        title: title,
-                        keywords: $("meta[name=Keywords]").attr("content"),
-                        description: $("meta[name=Description]").attr("content"),
-                        paragraphs: $("p").text()
-                    };
-                    console.log(pageDataforAmazon)
+                //console.log("THIS IS A RANDOM LINK")
+                //console.log(title)
+                if(pageCountAmazon<500){
+                    if(!visitedUrlsAmazon.has(res.request.uri.href) || !visitedTitlesAmazon.has(title)){
+                        visitedUrlsAmazon.add(res.request.uri.href);
+                        visitedTitlesAmazon.add(title);
+                        //console.log("AMAZON: ------- ",title)
+                        //console.log(res.$)
+                        const linksTextAmazon = [];
+                        const incomingLinksAmazon = [];
+                        $("a").each(function (i, link) {
+                            const href = $(link).attr("href");
+                            if (href) {
+                                const absoluteUrl = url.resolve(res.request.uri.href, href);
+                                //crawler.queue(absoluteUrl);
+        
+                                // Record the URL of the current page as an outgoing link
+                                linksTextAmazon.push(absoluteUrl);
+        
+                                // Record the URL of the current page as an incoming link for the linked page
+                                incomingLinksAmazon.push(absoluteUrl);
+                            }
+                        });
+    
+                        const pageDataforAmazon = {
+                            url: res.request.uri.href,
+                            title: title,
+                            keywords: $("meta[name=Keywords]").attr("content"),
+                            description: $("meta[name=Description]").attr("content"),
+                            paragraphs: $("p").text(),
+                            linksText: linksTextAmazon,
+                            incomingLinks: incomingLinksAmazon,
+                        };
+                        console.log(pageDataforAmazon)
+                        tempCollectionAmazon.push(pageDataforAmazon)
+                        pageCountAmazon++;
+                    }
                 }
             }
             
@@ -110,6 +135,7 @@ const crawler = new Crawler({
 crawler.on('drain', async function () {
     try {
         console.log(`Crawling is complete. Total pages crawled: ${pageCount}`);
+        console.log(`Crawling is complete. Total pages crawled: ${pageCountAmazon}`);
         await insertDataDB();
     } catch (err) {
         console.error("Error during data insertion:", err);
