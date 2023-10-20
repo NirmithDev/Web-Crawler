@@ -1,166 +1,186 @@
+//Required module (install via NPM)
 const Crawler = require("crawler");
 const url = require("url");
 const { MongoClient } = require('mongodb');
+const DBname = "pagesDB";
+const {Matrix} = require("ml-matrix");
 
-const dbName = "fruitDB";
-const dbUrl = "mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+1.10.6";
+//Connection URL
+const mongourl = "mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+1.10.6";
 
-const client = new MongoClient(dbUrl, { useNewUrlParser: true, useUnifiedTopology: true });
+//Create a MongoClient instance
+const client = new MongoClient(mongourl, { useNewUrlParser: true, useUnifiedTopology: true });
 
-//this is for the fruits
-let visitedUrls = new Set();
+let visitedLinks = new Set();
 let visitedTitles = new Set();
-let pageCount = 0;
+let pageCounter = 0;
+let tempData = [];
 
-//same as before an alternative to it so something like fruits
-let visitedUrlsAmazon = new Set();
-let visitedTitlesAmazon = new Set();
-let pageCountAmazon = 0;
-//switch to imdb
-const seedLinks = [
-    'https://people.scs.carleton.ca/~davidmckenney/fruitgraph/N-0.html',
-    'https://archive.org/details/cdl',
-    // 'https://www.amazon.ca/MAXPOWER-Three-Layer-Multi-Function-Organizer-Dividers/dp/B096TGB757/?_encoding=UTF8&pd_rd_w=Oi4It&content-id=amzn1.sym.0606cc44-75bd-471a-a861-3925e60effe6%3Aamzn1.symc.e5c80209-769f-4ade-a325-2eaec14b8e0e&pf_rd_p=0606cc44-75bd-471a-a861-3925e60effe6&pf_rd_r=25R3BMXYKNB9VJ755MT3&pd_rd_wg=3Hpau&pd_rd_r=91a8964d-6582-4f8c-ae34-6e46187358ad&ref_=pd_gw_ci_mcx_mr_hp_atf_m&th=1'
-    // Add more seed links here
-  ];
+//Initialize the database
+async function databaseInit() {
+  try {
+    //Connect to MongoDB server
+    await client.connect();
+    console.log("Connected to database.");
 
+    //Access the database using client.db(DBname)
+    const db = client.db(DBname);
 
-let tempCollection =[]
-let tempCollectionAmazon = []
-//keeping a counter that will keep upto date the number of pages I visit
-//let fruitSitePagesCrawled = 0;
-let chosenSitePagesCrawled = 0;
-//const maxFruitSitePages = 1000;
-const minChosenSitePages = 500;
+    //Drop the existing database if it exists
+    await db.dropDatabase();
+    console.log("Dropped database.");
+
+    //Create the 'pages' collection
+    const pagesCollection = db.collection("pages");
+    const result = await pagesCollection.insertMany(tempData);
+    console.log("Pages added to the database!")
+
+  } catch (err) {
+    console.error("Error connecting to the database:", err);
+  }
+}
 
 const crawler = new Crawler({
-    maxConnections: 10,
-    callback: async function (error, res, done) {
-        try {
-            if (error) {
-                console.error(error);
-                return;
-            }
+    maxConnections : 10, //use this for parallel, rateLimit for individual
+    //rateLimit: 10000,
 
-            const $ = res.$;
-            const title = $("title").text().trim();
-            currentURL = res.request.uri.href
-            if (currentURL.startsWith('https://people.scs.carleton.ca')) {
-                if (!visitedUrls.has(res.request.uri.href) || !visitedTitles.has(title)) {
-                    visitedUrls.add(res.request.uri.href);
-                    visitedTitles.add(title);
-                    const linksText = [];
-                    const incomingLinks = []; // Initialize for incoming links
-    
-                    $("a").each(function (i, link) {
-                        const href = $(link).attr("href");
-                        if (href) {
-                            const absoluteUrl = url.resolve(res.request.uri.href, href);
-                            crawler.queue(absoluteUrl);
-    
-                            // Record the URL of the current page as an outgoing link
-                            linksText.push(absoluteUrl);
-    
-                            // Record the URL of the current page as an incoming link for the linked page
-                            incomingLinks.push(absoluteUrl);
-                        }
-                    });
-                    // Output the extracted content
-                    //console.log("URL: " + res.request.uri.href);
-                    const pageData = {
-                        url: res.request.uri.href,
-                        title: title,
-                        keywords: $("meta[name=Keywords]").attr("content"),
-                        description: $("meta[name=Description]").attr("content"),
-                        paragraphs: $("p").text(),
-                        linksText: linksText,
-                        incomingLinks: incomingLinks,
-                        size:incomingLinks.length // Store incoming links
-                    };
-                    tempCollection.push(pageData);
-    
-                    pageCount++;
-                }
-            }else{
-                //this will be the other chosen seedLink
-                //console.log("THIS IS A RANDOM LINK")
-                //console.log(title)
-                if(pageCountAmazon<500){
-                    if(!visitedUrlsAmazon.has(res.request.uri.href) || !visitedTitlesAmazon.has(title)){
-                        visitedUrlsAmazon.add(res.request.uri.href);
-                        visitedTitlesAmazon.add(title);
-                        //console.log("AMAZON: ------- ",title)
-                        //console.log(res.$)
-                        const linksTextAmazon = [];
-                        const incomingLinksAmazon = [];
-                        $("a").each(function (i, link) {
-                            const href = $(link).attr("href");
-                            if (href) {
-                                const absoluteUrl = url.resolve(res.request.uri.href, href);
-                                //crawler.queue(absoluteUrl);
-        
-                                // Record the URL of the current page as an outgoing link
-                                linksTextAmazon.push(absoluteUrl);
-        
-                                // Record the URL of the current page as an incoming link for the linked page
-                                incomingLinksAmazon.push(absoluteUrl);
-                            }
-                        });
-    
-                        const pageDataforAmazon = {
-                            url: res.request.uri.href,
-                            title: title,
-                            keywords: $("meta[name=Keywords]").attr("content"),
-                            description: $("meta[name=Description]").attr("content"),
-                            paragraphs: $("p").text(),
-                            linksText: linksTextAmazon,
-                            incomingLinks: incomingLinksAmazon,
-                        };
-                        console.log(pageDataforAmazon)
-                        tempCollectionAmazon.push(pageDataforAmazon)
-                        pageCountAmazon++;
+    // This will be called for each crawled page
+    callback : function (error, res, done) {
+        if(error){
+            console.log(error);
+        }else{
+            const $ = res.$; //get cheerio data, see cheerio docs for info
+
+            const curLink = res.request.uri.href;
+            const curTitle = $('title').text().trim();
+            if (!visitedTitles.has(curTitle) || !visitedLinks.has(curLink)) {
+                visitedLinks.add(curLink);
+                visitedTitles.add(curTitle);
+                // console.log('\nNew page has been added:');
+                // console.log('Link: ' + curLink);
+                // console.log('Title: ' + curTitle);
+                // console.log('\n');
+
+                let connectedPages = [];
+                $('a').each(function (i, link) {
+                    const newPageLink = $(link).attr('href');
+                    if (newPageLink) {
+                        const absoluteUrl = url.resolve(res.request.uri.href, newPageLink);
+                        connectedPages.push(absoluteUrl);
+                        crawler.queue(absoluteUrl);
                     }
+                });
+
+                pageCounter++;
+                curData = {
+                    url: res.request.uri.href,
+                    title: curTitle,
+                    keywords: $("meta[name=Keywords]").attr("content"),
+                    description: $("meta[name=Description]").attr("content"),
+                    paragraphs: $("p").text(),
+                    connectedPages: connectedPages,
+                    outgoingLinks: connectedPages.length,
+                    incomingLinks: connectedPages.length
                 }
+                tempData.push(curData);
+                // console.log('\n Added New Page');
+                // console.log(JSON.stringify(curData));
+                // console.log('\n')
             }
-            
-        } catch (err) {
-            console.error("Error during crawling:", err);
-        } finally {
-            done();
         }
-    },
+        done();
+    }
 });
 
-
-crawler.on('drain', async function () {
+//Perhaps a useful event
+//Triggered when the queue becomes empty
+//There are some other events, check crawler docs
+crawler.on('drain', async function(){
     try {
-        console.log(`Crawling is complete. Total pages crawled: ${pageCount}`);
-        console.log(`Crawling is complete. Total pages crawled: ${pageCountAmazon}`);
-        await insertDataDB();
+        console.log("Done!");
+        console.log(`We have crawled through ${pageCounter} pages...`);
+    
+        //Initialize 
+        const a = 0.1;
+
+        //Transition probability matrix
+        let P = Matrix.zeros(pageCounter, pageCounter);
+        for (const pageData of tempData) {
+            pageData.pagerank = 1 / pageCounter;
+            //pageData.adjacencyMatrix = new Array(N).fill(0);
+        }
+        for (let i = 0; i < pageCounter; i++) {
+            let numOnes = 0;
+            for (let j = 0; j < pageCounter; j++) {
+                let currentPage = tempData[i];
+                let comparedPage = tempData[j];
+                if (currentPage.connectedPages.includes(comparedPage.url)) {
+                    P.set(i,j,1);
+                    numOnes += 1;
+                } else {
+                    P.set(i,j,0);
+                }
+            }
+            if (numOnes <= 0) {
+                for (let j = 0; j < pageCounter; j++) {
+                    P.set(i,j,(1/pageCounter));
+                }
+            } else {
+                for (let j = 0; j < pageCounter; j++) {
+                    //check if i!=j then proceed
+                    P.set(i,j,(P.get(i,j)/numOnes));
+                }
+            }
+        }
+        //I changed the 1-a for the dampin factor
+        P = Matrix.mul(P, (1-a));
+        P = Matrix.add(P, Matrix.mul(Matrix.ones(pageCounter, pageCounter),(a/pageCounter))); //see if you can change
+
+        //Initial PageRank vector
+        x0 = Matrix.zeros(1,pageCounter);
+        x0.set(0,0,1);
+        let curVector = x0;
+        let lastVector = null;
+
+        let eud = 1;
+        let iteration = 0;
+        while (eud > 0.0001 && iteration < 1000) {
+
+            lastVector = curVector;
+            curVector = curVector.mmul(P);
+
+            eud = 0;
+            for (let i = 0; i < pageCounter; i++) {
+                for (let j = 0; j < pageCounter; j++) {
+                    eud += (curVector.get(0,i)-lastVector.get(0,j)) * (curVector.get(0,i)-lastVector.get(0,j));
+                }
+            }
+            eud = Math.sqrt(eud);
+            iteration += 1;
+            // console.log(`Iteration: ${iteration},       eud: ${eud}`);
+        }
+
+        for (let i = 0; i < pageCounter; i++) {
+            tempData[i].pageRank = curVector.get(0,i);
+        }
+
+        let top25 = tempData.slice();
+        top25.sort((a, b) => b.pageRank - a.pageRank);
+        top25 = top25.slice(0, 25);
+        
+        for (i = 0; i < top25.length; i++) {
+            let page = top25[i];
+            console.log(`#${i+1}. (${page.pageRank.toFixed(10)}) ${page.url}`);
+        }
+
+        console.log('Initializing Database...');
+        await databaseInit();
     } catch (err) {
-        console.error("Error during data insertion:", err);
+        console.error("Error furing data insertion: " + err.message);
     } finally {
         await client.close();
     }
 });
 
-async function insertDataDB() {
-    try {
-        await client.connect();
-        const db = client.db(dbName);
-        await db.dropDatabase();
-        console.log("Dropped 'fruitDB' database.");
-        const collection = db.collection("fruitsData");
-        const result = await collection.insertMany(tempCollection);
-
-        console.log(`Inserted ${result.insertedCount} documents into the database.`);
-    } catch (err) {
-        console.error("Error inserting data into MongoDB:", err);
-    }
-}
-
-
-seedLinks.forEach((dataLink)=>{
-    crawler.queue(dataLink)
-})
-//crawler.queue('https://people.scs.carleton.ca/~davidmckenney/fruitgraph/N-0.html');
+//Queue a URL, which starts the crawl
+crawler.queue('https://people.scs.carleton.ca/~davidmckenney/fruitgraph/N-0.html');
