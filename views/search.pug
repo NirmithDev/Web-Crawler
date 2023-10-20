@@ -5,4 +5,39 @@ html(lang='en')
         title Header
 
     body
-    p We are searching!
+        form(id='search_form', class='search_form', method='GET', action='personal')
+            h2 Query: 
+            textarea(id='q', wrap='soft', name='q', rows='7', cols='50')
+            br
+            br
+
+            //- label.switch(name='test')
+            //-     h2 Boost:
+            //-     input(type="checkbox", id='boost', name='boost')
+            //-     span.slider
+
+            h2(class="inline") Boost:
+            input(type='radio', class='TF', id='true', name='boost', value='true')
+            label(for='true', class='TFLabel') True
+            input(type='radio', class='TF', id='false', name='boost', value='false', checked)
+            label(for='false', class='TFLabel') False
+            br
+            br
+
+            h2(class='inline') Results Limit:
+            input(type="number", name='limit', class='result_limit', id='limit' max='50', min='1', value='10', required)
+
+            br
+            br
+
+            h2 Search For:
+            input(type='submit', class='submit_button', id='personal_button', value="Personal")
+            input(type='submit', class='submit_button', id='fruits_button', value="Fruits")
+
+    script.
+        document.getElementById("personal_button").onclick = function() { 
+            document.getElementById("search_form").action = "personal";
+        };
+        document.getElementById("fruits_button").onclick = function() { 
+            document.getElementById("search_form").action = "fruits";
+        };

@@ -12,6 +12,8 @@ app.set('/views', __dirname + '/views');
 app.set('view engine', 'pug');
 const port = 3000;
 
+let tempFruits = [];
+
 /* TODO:
 const mongourl = "________________________________";
 const dbName = "_______________";
@@ -70,6 +72,14 @@ app.get('/', function (req, res) {
 
 app.get('/search', function (req, res) {
     res.status(200).render('app', {search: true}); 
+});
+
+app.get('/personal', function (req, res) {
+    res.status(200).render('app'); 
+});
+
+app.get('/fruits', function (req, res) {
+    res.status(200).render('app'); 
 });
 
 //Start the server
