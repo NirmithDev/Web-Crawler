@@ -181,3 +181,8 @@ h2.inline {
     margin-right: 10px;
     margin-top: 0px;
 }
+
+
+#Results {
+    display: inline-block;
+}
