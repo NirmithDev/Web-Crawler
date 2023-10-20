@@ -1,0 +1,13 @@
+doctype html
+html(lang='en')
+    head
+        link(rel='icon', type='image/x-icon', href='/images/android-chrome-512x512.png')
+        link(rel='stylesheet' href='/css/style.css')
+        title Crawler Database
+
+    body
+        include header.pug
+        #Content
+            h1 test
+            if search
+                include search.pug
