@@ -95,60 +95,67 @@ const crawler = new Crawler({
                     // console.log('\n')
                 }
             }else{
-                const $ = res.$;
+                const $ = res.$; //get cheerio data, see cheerio docs for info
+
+                const curLink = res.request.uri.href;
+                const curTitle = $('title').text().trim();
                 const $title = $('.fDTGTb');
                 //console.log($title.first().contents())
                 //const $paragraph = $('.iUikZB .ipc-html-content-inner-div');
                 const title = $title.first().contents().filter(function() {
                     return this.type === 'text';
                 }).text().trim();
-                link=res.request.uri.href
-                if (!visitedTitlesPersonal.has(title) || !visitedLinksPersonal.has(link)) {
-                    if(pageCounterPersonal<500){
-                        visitedLinksPersonal.add(title);
-                        visitedTitlesPersonal.add(link);
-                        //console.log(title)
-                        const genres = [];
-                        $('.ipc-chip-list__scroller .ipc-chip--on-baseAlt .ipc-chip__text').each(function(i, element) {
-                            const genre = $(element).text();
-                            genres.push(genre);
-                        });
-                        //console.log(genres)
-                        //const dateReleased = $('.iwmAVw .ipc-link').first().contents().filter(function(){
-                        //    return this.type === 'text';
-                        //});
-                        //console.log(dateReleased[0].data)
-                        let connectedPages = [];
-                        //const imdbRating = $('span[itemProp="ratingValue"]').text();
-                        //const poster = $('div.poster a img').attr('src');
-                        const summary = $('p').text()
-                        //console.log(summary);
-                        //const summaryLink = $('.gUCZcO .ipc-inline-list__item .ipc-link')
-                        pageCounterPersonal++;
-                        console.log(pageCounterPersonal)
-                        //console.log(summaryLink)
-                        $(".celwidget .ipc-poster-card a.ipc-lockup-overlay").each(function (i, link) {
-                            const href = $(link).attr("href");
-                            if (href) {
-                                const absoluteUrl = url.resolve(res.request.uri.href, href);
-                                
-                                crawler.queue(absoluteUrl);
-                                    
-                                //console.log(absoluteUrl)
-                                // Record the URL of the current page as an outgoing link
-                                connectedPages.push(absoluteUrl);
 
-                                // Record the URL of the current page as an incoming link for the linked page
-                                //incomingLinks.push(absoluteUrl);
-                            }
-                        });
-                        //console.log(connectedPages)
-                    }else {
-                        // Stop the crawler if the page limit is reached
-                        console.log('Page limit reached. Stopping the crawler.');
-                        done(); // Empty queue to stop further crawling
-                    }
-                    
+                link=res.request.uri.href
+                const urlObject = new URL(link);
+
+                // Remove the query parameters
+                urlObject.search = '';
+
+                // Convert it back to a string
+                const strippedUrl = urlObject.toString();
+                if ((!visitedTitlesPersonal.has(title) || !visitedLinksPersonal.has(strippedUrl)) && visitedLinksPersonal.size<500) {
+                    //if(pageCounterPersonal<500){
+                    visitedLinksPersonal.add(strippedUrl);
+                    visitedTitlesPersonal.add(title);
+                    console.log(visitedLinksPersonal)
+                    //console.log(title)
+                    //console.log(typeof(title))
+                    //console.log(visitedLinksPersonal)
+                    const genres = [];
+                    $('.ipc-chip-list__scroller .ipc-chip--on-baseAlt .ipc-chip__text').each(function(i, element) {
+                        const genre = $(element).text();
+                        genres.push(genre);
+                    });
+                    //console.log(genres)
+                    //const dateReleased = $('.iwmAVw .ipc-link').first().contents().filter(function(){
+                    //    return this.type === 'text';
+                    //});
+                    //console.log(dateReleased[0].data)
+                    let connectedPages = [];
+                    //const imdbRating = $('span[itemProp="ratingValue"]').text();
+                    //const poster = $('div.poster a img').attr('src');
+                    const summary = $('p').text()
+                    //console.log(summary);
+                    //const summaryLink = $('.gUCZcO .ipc-inline-list__item .ipc-link')
+                    pageCounterPersonal++;
+                    console.log(pageCounterPersonal)
+                    //console.log(summaryLink)
+                    $(".celwidget .ipc-poster-card a.ipc-lockup-overlay").each(function (i, link) {
+                        const href = $(link).attr("href");
+                        if (href) {
+                            const absoluteUrl = url.resolve(res.request.uri.href, href);
+                            
+                            crawler.queue(absoluteUrl);
+                                
+                            //console.log(absoluteUrl)
+                            // Record the URL of the current page as an outgoing link
+                            connectedPages.push(absoluteUrl);
+                            // Record the URL of the current page as an incoming link for the linked page
+                            //incomingLinks.push(absoluteUrl);
+                        }
+                    });
+                    //console.log(connectedPages)
                 }
             }
         }
@@ -168,7 +175,7 @@ crawler.on('drain', async function(){
         const a = 0.1;
 
         //Transition probability matrix
-        /*let P = Matrix.zeros(pageCounter, pageCounter);
+        let P = Matrix.zeros(pageCounter, pageCounter);
         for (const pageData of tempData) {
             pageData.pagerank = 1 / pageCounter;
             //pageData.adjacencyMatrix = new Array(N).fill(0);
@@ -227,7 +234,7 @@ crawler.on('drain', async function(){
         for (let i = 0; i < pageCounter; i++) {
             tempData[i].pageRank = curVector.get(0,i);
         }
-
+/*
         let top25 = tempData.slice();
         top25.sort((a, b) => b.pageRank - a.pageRank);
         top25 = top25.slice(0, 25);
@@ -236,9 +243,9 @@ crawler.on('drain', async function(){
             let page = top25[i];
             console.log(`#${i+1}. (${page.pageRank.toFixed(10)}) ${page.url}`);
         }
-
+*/
         console.log('Initializing Database...');
-        await databaseInit();*/
+        await databaseInit();
     } catch (err) {
         console.error("Error furing data insertion: " + err.message);
     } finally {
@@ -249,8 +256,8 @@ crawler.on('drain', async function(){
 //Queue a URL, which starts the crawl
 //switch to imdb
 const seedLinks = [
-    //'https://people.scs.carleton.ca/~davidmckenney/fruitgraph/N-0.html',
-    'https://m.imdb.com/title/tt0107290/',
+    'https://people.scs.carleton.ca/~davidmckenney/fruitgraph/N-0.html',
+    //'https://m.imdb.com/title/tt0107290/',
     //'https://m.imdb.com/title/tt0383574/?ref_=tt_sims_tt_i_1',
     // 'https://www.amazon.ca/MAXPOWER-Three-Layer-Multi-Function-Organizer-Dividers/dp/B096TGB757/?_encoding=UTF8&pd_rd_w=Oi4It&content-id=amzn1.sym.0606cc44-75bd-471a-a861-3925e60effe6%3Aamzn1.symc.e5c80209-769f-4ade-a325-2eaec14b8e0e&pf_rd_p=0606cc44-75bd-471a-a861-3925e60effe6&pf_rd_r=25R3BMXYKNB9VJ755MT3&pd_rd_wg=3Hpau&pd_rd_r=91a8964d-6582-4f8c-ae34-6e46187358ad&ref_=pd_gw_ci_mcx_mr_hp_atf_m&th=1'
     // Add more seed links here
