@@ -2,7 +2,7 @@
 const Crawler = require("crawler");
 const url = require("url");
 const { MongoClient } = require('mongodb');
-const DBname = "personalPagesDB";
+const DBname = "pagesDB";
 const {Matrix} = require("ml-matrix");
 const cheerio = require('cheerio');
 
@@ -32,7 +32,7 @@ async function databaseInit() {
     console.log("Dropped database.");
 
     //Create the 'pages' collection
-    const pagesCollection = db.collection("pages");
+    const pagesCollection = db.collection("personalPages");
     const result = await pagesCollection.insertMany(tempDataPersonal);
     console.log("Pages added to the database!")
 
@@ -81,26 +81,15 @@ const crawler = new Crawler({
                 //if(pageCounterPersonal<500){
                     visitedLinksPersonal.add(strippedUrl);
                     visitedTitlesPersonal.add(title);
-                    //console.log(visitedLinksPersonal)
-                    //console.log(title)
-                    //console.log(typeof(title))
-                    //console.log(visitedLinksPersonal)
                     const genres = [];
                     $('.ipc-chip-list__scroller .ipc-chip--on-baseAlt .ipc-chip__text').each(function(i, element) {
                         const genre = $(element).text();
                         genres.push(genre);
                     });
                     //console.log(genres)
-                    //const dateReleased = $('.iwmAVw .ipc-link').first().contents().filter(function(){
-                    //    return this.type === 'text';
-                    //});
-                    //console.log(dateReleased[0].data)
                     let connectedPages = [];
-                    //const imdbRating = $('span[itemProp="ratingValue"]').text();
-                    //const poster = $('div.poster a img').attr('src');
                     const summary = $('p').text()
                     //console.log(summary);
-                    //const summaryLink = $('.gUCZcO .ipc-inline-list__item .ipc-link')
                     pageCounterPersonal++;
                     console.log(pageCounterPersonal)
                     //console.log(summaryLink)
@@ -108,15 +97,17 @@ const crawler = new Crawler({
                         const href = $(link).attr("href");
                         if (href) {
                             const absoluteUrl = url.resolve(res.request.uri.href, href);
-                            //if(pageCounterPersonal<500){
-                                crawler.queue(absoluteUrl);
-                            //}
-                                
+                            const urlObject2 = new URL(absoluteUrl);
+
+                            // Remove the query parameters
+                            urlObject2.search = '';
+
+                            // Convert it back to a string
+                            const strippedUrl = urlObject.toString();
                             //console.log(absoluteUrl)
                             // Record the URL of the current page as an outgoing link
-                            connectedPages.push(absoluteUrl);
-                            // Record the URL of the current page as an incoming link for the linked page
-                            //incomingLinks.push(absoluteUrl);
+                            crawler.queue(absoluteUrl);
+                            connectedPages.push(strippedUrl);
                         }
                     });
                     //console.log(connectedPages)
@@ -125,12 +116,53 @@ const crawler = new Crawler({
                         title: title,
                         paragraphs: summary,
                         genres: genres,
-                        outgoingLinks: connectedPages,
-                        incomingLinks: ''
+                        outgoingLinks: connectedPages
                     }
                     tempDataPersonal.push(curData);
+                    //console.log(tempDataPersonal)
                 }
             //}
+            /*temp=[
+                {
+                    url:"https://m.imdb.com/title/tt0107290/",
+                    title:"Jurassic Park",
+                    paragraphs:"A pragmatic paleontologist touring an almost complete theme park on an…",
+                    genres: ["Action","Adventure","Sci-Fi"],
+                    outgoingLinks:["https://m.imdb.com/title/tt0119567/","https://m.imdb.com/title/tt0088763/","https://m.imdb.com/title/tt0325980/"],
+                },
+                {
+                    url:"https://m.imdb.com/title/tt0325980/",
+                    title:"Jurassic Park",
+                    paragraphs:"A pragmatic paleontologist touring an almost complete theme park on an…",
+                    genres: ["Action","Adventure","Sci-Fi"],
+                    outgoingLinks:["https://m.imdb.com/title/tt0107290/","https://m.imdb.com/title/tt0088763/","https://m.imdb.com/title/tt0325980/"],
+                },
+                {
+                    url:"https://m.imdb.com/title/tt0082971/",
+                    title:"Jurassic Park",
+                    paragraphs:"A pragmatic paleontologist touring an almost complete theme park on an…",
+                    genres: ["Action","Adventure","Sci-Fi"],
+                    outgoingLinks:["https://m.imdb.com/title/tt0107290/","https://m.imdb.com/title/tt0088763/?ref_=tt_sims_tt_i_2","https://m.imdb.com/title/tt0325980/?ref_=tt_sims_tt_i_3"],
+                },
+            ]*/
+            // for(i=0;i<temp.length;i++){
+            //     //console.log(temp[i].url)
+            //     temp[i].incomingLinks=[]
+            //     for(j=0;j<temp.length;j++){
+            //         if(i==j){
+            //             continue;
+            //         }
+            //         let a = new Set(temp[j].outgoingLinks)
+            //         if(a.has(temp[i].url)){
+            //             incoming=true 
+            //             temp[i].incomingLinks.push(temp[j].url)
+            //         }
+            //         //console.log(temp[j].url)
+            //         //if(temp[i].url = temp[j].outgoingLinks)
+            //     }
+
+            // }
+            // console.log(temp)
         }
         done();
         
@@ -218,6 +250,24 @@ crawler.on('drain', async function(){
             console.log(`#${i+1}. (${page.pageRank.toFixed(10)}) ${page.url}`);
         }
         */
+        //before initializing the database we must create an incoming link collection
+        //so we iterate over the tempCollection
+        for(i=0;i<tempDataPersonal.length;i++){
+            //console.log(temp[i].url)
+            tempDataPersonal[i].incomingLinks=[]
+            for(j=0;j<tempDataPersonal.length;j++){
+                if(i==j){
+                    continue;
+                }
+                let a = new Set(tempDataPersonal[j].outgoingLinks)
+                if(a.has(tempDataPersonal[i].url)){
+                    incoming=true 
+                    tempDataPersonal[i].incomingLinks.push(tempDataPersonal[j].url)
+                }
+                //console.log(temp[j].url)
+                //if(temp[i].url = temp[j].outgoingLinks)
+            }
+        }
         console.log('Initializing Database...');
         await databaseInit();
     } catch (err) {
