@@ -48,10 +48,18 @@ async function databaseInit() {
 
 const crawler = new Crawler({
     maxConnections : 10, //use this for parallel, rateLimit for individual
-    //rateLimit: 10000,
+    rateLimit: 10,
 
     // This will be called for each crawled page
     callback : function (error, res, done) {
+        if(pageCounterPersonal>=500){
+            //done();
+            //crawler.stop();
+            crawler.queue=[];
+            crawler.emit("drain")
+            return;
+        }
+        
         if(error){
             console.log(error);
         }else{
@@ -78,7 +86,7 @@ const crawler = new Crawler({
                 //if(pageCounterPersonal<500){
                     visitedLinksPersonal.add(strippedUrl);
                     visitedTitlesPersonal.add(title);
-                    console.log(visitedLinksPersonal)
+                    //console.log(visitedLinksPersonal)
                     //console.log(title)
                     //console.log(typeof(title))
                     //console.log(visitedLinksPersonal)
@@ -105,8 +113,9 @@ const crawler = new Crawler({
                         const href = $(link).attr("href");
                         if (href) {
                             const absoluteUrl = url.resolve(res.request.uri.href, href);
-                            
-                            crawler.queue(absoluteUrl);
+                            //if(pageCounterPersonal<500){
+                                crawler.queue(absoluteUrl);
+                            //}
                                 
                             //console.log(absoluteUrl)
                             // Record the URL of the current page as an outgoing link
@@ -120,6 +129,7 @@ const crawler = new Crawler({
             //}
         }
         done();
+        
     }
 });
 
