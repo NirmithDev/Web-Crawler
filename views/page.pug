@@ -1,0 +1,24 @@
+doctype html
+html(lang='en')
+    head
+        link(rel='stylesheet' href='/css/style.css')
+        title Header
+
+    body
+        #Page
+            h1(class='page_title') #{page.title}
+            p(class='inline_close') Page URL: 
+            a(href=page.url) #{page.url}
+            if type == 'fruits'
+                h2 Incoming Links (#{page.incomingLinks.$numberInt})
+                each link in page.connectedPages 
+                    a(href=link) #{link}
+                    br
+                h2 Outgoing Links (#{page.outgoingLinks.$numberInt})
+                each link in page.connectedPages 
+                    a(href=link) #{link}
+                    br
+            if type == 'personal'
+                p in progress
+            h2 Word Frequency
+            p additional data
