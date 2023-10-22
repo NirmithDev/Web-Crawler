@@ -163,6 +163,13 @@ p.inline {
     margin-bottom: 8px;
 }
 
+p.inline2 {
+    float: left;
+    margin-right: 8px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
 p.inline_close {
     float: left;
     margin-right: 10px;

@@ -6,28 +6,22 @@ html(lang='en')
 
     body
         #Results
-            //- if type == 'fruits'
-            //-     each page in results
-            //-         p #{page.title}
-            //-         br
-            //- if type == 'personal'
-            //-     p personal
             each page in results
                 br
                 br
                 #SquareBorder
                     if type == 'fruits'
-                        a(href=`fruits/${page._id.$oid}`, class='link_header') #{page.title}:
+                        a(href=`fruits/${page._id}`, class='link_header') #{page.title}
                     if type == 'personal'
-                        a(href=`personal/${page._id.$oid}`, class='link_header') #{page.title}:
+                        a(href=`personal/${page._id}`, class='link_header') #{page.title}
                     br
-                    p(class='inline') Search Score: _____
-                    p Page Rank: #{page.pagerank.$numberDouble}
+                    p(class='inline') Search Score: #{page.searchscore.toFixed(2)}
+                    p Page Rank: #{page.pr.toFixed(2)}
                     a(href=page.url) #{page.url}
                     br
                     if type == 'personal'
-                        a(href=`personal/${page._id.$oid}`, class='button') Info
-                        a(href=`personal/${page._id.$oid}/JSON`, class='button') JSON
+                        a(href=`personal/${page._id}`, class='button') Info
+                        a(href=`personal/${page._id}/JSON`, class='button') JSON
                     if type == 'fruits'
-                        a(href=`fruits/${page._id.$oid}`, class='button') Info
-                        a(href=`fruits/${page._id.$oid}/JSON`, class='button') JSON
+                        a(href=`fruits/${page._id}`, class='button') Info
+                        a(href=`fruits/${page._id}/JSON`, class='button') JSON

@@ -27,6 +27,7 @@ let fruitPages = [];
 const personalPagesSearch = elasticlunr(function () {
     this.addField('title');
     this.addField('paragraphs');
+    this.addField('pr');
     this.addField('id');
     this.setRef('id');
 });
@@ -34,9 +35,34 @@ const personalPagesSearch = elasticlunr(function () {
 const fruitPagesSearch = elasticlunr(function () {
     this.addField('title');
     this.addField('paragraphs');
+    this.addField('pr');
     this.addField('id');
     this.setRef('id');
 });
+
+function getWordCount(inputString) {
+    const cleanedString = inputString
+        .replace(/[^\w\s]|_/g, ' ') // Remove punctuation and special characters
+        .replace(/\s+/g, ' ') // Replace multiple spaces with a single space
+        .toLowerCase(); // Convert to lowercase
+
+    const words = cleanedString.split(' ');
+
+    let wordCount = {};
+
+    // Iterate through the array of words and update the word counts
+    for (let word of words) {
+        if (word) { // Ignore empty strings
+            if (wordCount[word]) {
+                wordCount[word]++;
+            } else {
+                wordCount[word] = 1;
+            }
+        }
+    }
+
+    return wordCount;
+}
 
 async function connectToDatabase() {
     try {
@@ -52,33 +78,34 @@ async function connectToDatabase() {
         fruitPages = await fruitCollection.find({}).toArray();
 
         personalPages.forEach(function (p) {
-            p.pagerank = { '$numberDouble': '0.001' }
-            index.addDoc({
+            p.pr = parseFloat(2.11);
+            personalPagesSearch.addDoc({
                 id: p._id.toString(),
                 title: p.title || '',
-                paragraphs: p.paragraphs || ''
+                paragraphs: p.paragraphs || '',
+                pr: p.pr || 0
             });
+
+            p.wordCount = getWordCount(p.paragraphs);
         });
         fruitPages.forEach(function (p) {
-            p.pagerank = { '$numberDouble': '0.001' }
-            index.addDoc({
+            p.pr = parseFloat(2.11);
+            fruitPagesSearch.addDoc({
                 id: p._id.toString(),
                 title: p.title || '',
-                paragraphs: p.paragraphs || ''
+                paragraphs: p.paragraphs || '',
+                pr: p.pr || 0
             });
+
+            p.wordCount = getWordCount(p.paragraphs);
         });
+
     } catch (err) {
         console.error("Error connecting to the database:", err);
     }
 }
 
 connectToDatabase();
-
-console.log(fruitPages[0]);
-console.log(personalPages[0]);
-
-
-
 
 // Render the home page
 app.get('/', function (req, res) {
@@ -92,80 +119,186 @@ app.get('/search', function (req, res) {
 
 // Search results for personal collection
 app.get('/personal', function (req, res) {
-
-    // Get query parameters
     let q = req.query.q;
     let boost = req.query.boost;
     let limit = req.query.limit;
 
-    // Initialize variables
     let results = [];
     let page_list = [];
 
-    // Search the collection
     if (boost == 'true') {
-        console.log('boost = true');
-        page_list = personalPages.slice(0,parseInt(limit));
-    } else {
-        results = personalPagesSearch.search(q, {expand: true}).slice(0,parseInt(limit));
-        console.log(results);
+        results = personalPagesSearch.search(q, {});
         results.forEach((result) => {
             p = personalPages.find(page => page._id.toString() == (result.ref));
-            p.score = result.score;
+            p.searchscore = (result.score * p.pr);
+            page_list.push(p);
+        });
+        page_list.sort((a, b) => {
+            return b.searchscore - a.searchscore;
+        })
+    } else {
+        results = personalPagesSearch.search(q, {});
+        results.forEach((result) => {
+            p = personalPages.find(page => page._id.toString() == (result.ref));
+            p.searchscore = result.score;
             page_list.push(p);
         });
     }
-    res.status(200).render('app', {results: page_list, type: 'personal'}); 
+    res.status(200).render('app', {results: page_list.slice(0,parseInt(limit)), type: 'personal'}); 
 });
 
 // Search results for personal collection in JSON
 app.get('/personal/JSON', function (req, res) {
-    // TODO: Get results based on the search parameters
-    // TODO: add group members names to the json render
+    let q = req.query.q;
+    let boost = req.query.boost;
+    let limit = req.query.limit;
+
+    let results = [];
+    let page_list = [];
+
+    if (boost == 'true') {
+        results = personalPagesSearch.search(q, {});
+        results.forEach((result) => {
+            p = personalPages.find(page => page._id.toString() == (result.ref));
+            p.name = 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida';
+            p.searchscore = (result.score * p.pr);
+            page_list.push(p);
+        });
+        page_list.sort((a, b) => {
+            return b.searchscore - a.searchscore;
+        })
+    } else {
+        results = personalPagesSearch.search(q, {});
+        results.forEach((result) => {
+            p = personalPages.find(page => page._id.toString() == (result.ref));
+            p.name = 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida';
+            p.searchscore = result.score;
+            page_list.push(p);
+        });
+    }
+
+    temp = page_list.slice(0,parseInt(limit));
+    page_list = [];
+    temp.forEach((page) => {
+        page_list.push({
+            name: 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida',
+            url: page.url,
+            score: page.searchscore,
+            title: page.title,
+            pr: page.pr
+        })
+    });
+
     res.setHeader('Content-Type', 'application/json');
-    res.status(200).json(fruitPages);
+    res.status(200).json(page_list);
 });
 
 // View specific page data from personal collection
 app.get('/personal/:id', function (req, res) {
-    // TODO: retrieve the page based on id
-    res.status(200).render('app', {page: fruitPages[0], type: 'personal'}); 
+    const id = req.params.id;
+    const page = personalPages.find(page => page._id.toString() == id);
+    res.status(200).render('app', {page: page, type: 'personal'}); 
 });
 
 // View specific page data from personal collection in JSON
 app.get('/personal/:id/JSON', function (req, res) {
-    // TODO: retrieve the page based on id
-    // TODO: add group members names to the json render
+    const id = req.params.id;
+    const page = personalPages.find(page => page._id.toString() == id);
+    // page.name = 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida';
     res.setHeader('Content-Type', 'application/json');
-    res.status(200).json(fruitPages[0]);
+    res.status(200).json(page);
 }); 
 
 // Search results for fruits collection
 app.get('/fruits', function (req, res) {
-    // TODO: Get results based on the search parameters
-    res.status(200).render('app', {results: fruitPages, type: 'fruits'}); 
+    let q = req.query.q;
+    let boost = req.query.boost;
+    let limit = req.query.limit;
+
+    let results = [];
+    let page_list = [];
+
+    if (boost == 'true') {
+        results = fruitPagesSearch.search(q, {});
+        results.forEach((result) => {
+            p = fruitPages.find(page => page._id.toString() == (result.ref));
+            p.searchscore = (result.score * p.pr);
+            page_list.push(p);
+        });
+        page_list.sort((a, b) => {
+            return b.searchscore - a.searchscore;
+        })
+    } else {
+        results = fruitPagesSearch.search(q, {});
+        results.forEach((result) => {
+            p = fruitPages.find(page => page._id.toString() == (result.ref));
+            p.searchscore = result.score;
+            page_list.push(p);
+        });
+    }
+    res.status(200).render('app', {results: page_list.slice(0,parseInt(limit)), type: 'fruits'}); 
 });
 
 // Search results for fruits collection in JSON
 app.get('/fruits/JSON', function (req, res) {
-    // TODO: Get results based on the search parameters
-    // TODO: add group members names to the json render
+    let q = req.query.q;
+    let boost = req.query.boost;
+    let limit = req.query.limit;
+
+    let results = [];
+    let page_list = [];
+
+    if (boost == 'true') {
+        results = fruitPagesSearch.search(q, {});
+        results.forEach((result) => {
+            p = fruitPages.find(page => page._id.toString() == (result.ref));
+            p.name = 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida';
+            p.searchscore = (result.score * p.pr);
+            page_list.push(p);
+        });
+        page_list.sort((a, b) => {
+            return b.searchscore - a.searchscore;
+        })
+    } else {
+        results = fruitPagesSearch.search(q, {});
+        results.forEach((result) => {
+            p = fruitPages.find(page => page._id.toString() == (result.ref));
+            p.name = 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida';
+            p.searchscore = result.score;
+            page_list.push(p);
+        });
+    }
+
+    temp = page_list.slice(0,parseInt(limit));
+    page_list = [];
+    temp.forEach((page) => {
+        page_list.push({
+            name: 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida',
+            url: page.url,
+            score: page.searchscore,
+            title: page.title,
+            pr: page.pr
+        })
+    });
+
     res.setHeader('Content-Type', 'application/json');
-    res.status(200).json(fruitPages);
+    res.status(200).json(page_list);
 });
 
 // View specific page data from fruits collection
 app.get('/fruits/:id', function (req, res) {
-    // TODO: retrieve the page based on id
-    res.status(200).render('app', {page: fruitPages[0], type: 'fruits'}); 
+    const id = req.params.id;
+    const page = fruitPages.find(page => page._id.toString() == id);
+    res.status(200).render('app', {page: page, type: 'fruits'}); 
 });
 
 // View specific page data from fruits collection in JSON
 app.get('/fruits/:id/JSON', function (req, res) {
-    // TODO: retrieve the page based on id
-    // TODO: add group members names to the json render
+    const id = req.params.id;
+    const page = fruitPages.find(page => page._id.toString() == id);
+    // page.name = 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida';
     res.setHeader('Content-Type', 'application/json');
-    res.status(200).json(fruitPages[0]);
+    res.status(200).json(page);
 });
 
 //Start the server
