@@ -2,7 +2,7 @@
 const Crawler = require("crawler");
 const url = require("url");
 const { MongoClient } = require('mongodb');
-const DBname = "pagesDB";
+const DBname = "personalPagesDB";
 const {Matrix} = require("ml-matrix");
 const cheerio = require('cheerio');
 
@@ -11,11 +11,6 @@ const mongourl = "mongodb://127.0.0.1:27017/?directConnection=true&serverSelecti
 
 //Create a MongoClient instance
 const client = new MongoClient(mongourl, { useNewUrlParser: true, useUnifiedTopology: true });
-
-let visitedLinks = new Set();
-let visitedTitles = new Set();
-let pageCounter = 0;
-let tempData = [];
 
 let visitedLinksPersonal = new Set();
 let visitedTitlesPersonal = new Set();
@@ -38,7 +33,7 @@ async function databaseInit() {
 
     //Create the 'pages' collection
     const pagesCollection = db.collection("pages");
-    const result = await pagesCollection.insertMany(tempData);
+    const result = await pagesCollection.insertMany(tempDataPersonal);
     console.log("Pages added to the database!")
 
   } catch (err) {
@@ -125,6 +120,15 @@ const crawler = new Crawler({
                         }
                     });
                     //console.log(connectedPages)
+                    curData = {
+                        url: strippedUrl,
+                        title: title,
+                        paragraphs: summary,
+                        genres: genres,
+                        outgoingLinks: connectedPages,
+                        incomingLinks: ''
+                    }
+                    tempDataPersonal.push(curData);
                 }
             //}
         }
@@ -213,9 +217,9 @@ crawler.on('drain', async function(){
             let page = top25[i];
             console.log(`#${i+1}. (${page.pageRank.toFixed(10)}) ${page.url}`);
         }
-
+        */
         console.log('Initializing Database...');
-        await databaseInit();*/
+        await databaseInit();
     } catch (err) {
         console.error("Error furing data insertion: " + err.message);
     } finally {

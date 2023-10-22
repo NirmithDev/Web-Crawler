@@ -259,8 +259,6 @@ const seedLinks = [
     'https://people.scs.carleton.ca/~davidmckenney/fruitgraph/N-0.html',
     //'https://m.imdb.com/title/tt0107290/',
     //'https://m.imdb.com/title/tt0383574/?ref_=tt_sims_tt_i_1',
-    // 'https://www.amazon.ca/MAXPOWER-Three-Layer-Multi-Function-Organizer-Dividers/dp/B096TGB757/?_encoding=UTF8&pd_rd_w=Oi4It&content-id=amzn1.sym.0606cc44-75bd-471a-a861-3925e60effe6%3Aamzn1.symc.e5c80209-769f-4ade-a325-2eaec14b8e0e&pf_rd_p=0606cc44-75bd-471a-a861-3925e60effe6&pf_rd_r=25R3BMXYKNB9VJ755MT3&pd_rd_wg=3Hpau&pd_rd_r=91a8964d-6582-4f8c-ae34-6e46187358ad&ref_=pd_gw_ci_mcx_mr_hp_atf_m&th=1'
-    // Add more seed links here
 ];
 seedLinks.forEach((dataLink)=>{
     crawler.queue(dataLink)
