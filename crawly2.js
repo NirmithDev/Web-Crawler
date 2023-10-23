@@ -164,7 +164,49 @@ crawler.on('drain', async function(){
         const a = 0.1;
 
         //Transition probability matrix
+        P = Matrix.zeros(tempDataPersonal.length, tempDataPersonal.length); // Could just do 500, 500
+
+        //PageRank vector and Convergence threshold
+        x0 = Matrix.ones(1, tempDataPersonal.length);
+        let t = 0.0001;
         
+        // Index data for matrix building purposes
+        for(i = 0; i < tempDataPersonal.length; i++){
+            tempDataPersonal[i].index = i;
+        }
+
+        // Build transition probability matrix
+        for (i = 0; i < P.rows; i++) {
+            pageNum = tempDataPersonal[i].index; // Get index
+            linkedTo = allPages[i].outgoingLinks; 
+            for (j = 0; j < allPages.length; j++) {
+              if(linkedTo.includes(tempDataPersonal[j].url)){ // If the page is linked to a page at j, add info to matrix
+                pageNumOfLinkedTo = tempDataPersonal[j].index;
+                //The probability calculation
+                P.set(pageNum, pageNumOfLinkedTo, P.get(pageNum, pageNumOfLinkedTo) + 1/linkedTo.length); 
+              }
+            }
+        }
+
+        difference = 10000; //Dummy value to start
+        while(difference > t){
+            x1 = x0.mmul(P);
+            difference = x0.sub(x1).abs().sum();
+            x0 = x1;
+        }
+
+        //Finish PageRank Calculation
+        x0.div(x0.sum()); // Dont know if this is needed, had this in my Lab 5 code
+        x0.mul(1 - a); // Create a 10% chance of teleportation, a is defined abovr as 0.1
+
+        // Add PageRank to each page!
+        for(i = 0; i < x0.size; i++) {
+            // NOT SURE if indexing is correct here! Might need a nested loop and check tempDataPersonal[j].index == i
+            tempDataPersonal[i].pageRank = x0.get(0, i); 
+        }
+
+        
+
         //before initializing the database we must create an incoming link collection
         //so we iterate over the tempCollection
         for(i=0;i<tempDataPersonal.length;i++){
