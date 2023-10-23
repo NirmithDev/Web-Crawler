@@ -33,8 +33,12 @@ async function databaseInit() {
     const db = client.db(DBname);
 
     //Drop the existing database if it exists
-    await db.dropDatabase();
-    console.log("Dropped database.");
+    try {
+        await db.dropCollection("personalPages");
+        console.log("Dropped collection.");
+    } catch (err) {
+        console.log("Failed to drop collection: " + err.message);
+    }
 
     //Create the 'pages' collection
     const pagesCollection = db.collection("pages");
