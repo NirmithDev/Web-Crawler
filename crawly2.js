@@ -178,15 +178,17 @@ crawler.on('drain', async function(){
         // Build transition probability matrix
         for (i = 0; i < P.rows; i++) {
             pageNum = tempDataPersonal[i].index; // Get index
-            linkedTo = allPages[i].outgoingLinks; 
-            for (j = 0; j < allPages.length; j++) {
-              if(linkedTo.includes(tempDataPersonal[j].url)){ // If the page is linked to a page at j, add info to matrix
+            linkedTo = tempDataPersonal[i].outgoingLinks; 
+            for (j = 0; j < P.columns; j++) {
+              if(linkedTo.has(tempDataPersonal[j].url)){ // If the page is linked to a page at j, add info to matrix
                 pageNumOfLinkedTo = tempDataPersonal[j].index;
                 //The probability calculation
-                P.set(pageNum, pageNumOfLinkedTo, P.get(pageNum, pageNumOfLinkedTo) + 1/linkedTo.length); 
+                P.set(pageNum, pageNumOfLinkedTo, P.get(pageNum, pageNumOfLinkedTo) + 1/linkedTo.size); 
               }
             }
         }
+
+        console.log("Transition Probability Matrix: \n", P);
 
         difference = 10000; //Dummy value to start
         while(difference > t){
@@ -205,8 +207,9 @@ crawler.on('drain', async function(){
             tempDataPersonal[i].pageRank = x0.get(0, i); 
         }
 
+        console.log("PageRank Sum: ", x0.sum());
+        console.log("PageRank Array: ", x0);
         
-
         //before initializing the database we must create an incoming link collection
         //so we iterate over the tempCollection
         for(i=0;i<tempDataPersonal.length;i++){
