@@ -35,7 +35,7 @@ html(lang='en')
                                             a(href=page.url) #{page.url.substring(0, 80)}
                                         br
                                         a(href=`fruits/${page._id}`, class='button') Info
-                                        a(href=`fruits/${page._id}/JSON`, class='button') JSON
+                                        //- a(href=`fruits/${page._id}/JSON`, class='button') JSON
                             #PersonalPages(class="flex-child")
                                 each page in personal_pages
                                     br
@@ -53,4 +53,4 @@ html(lang='en')
                                             a(href=page.url) #{page.url.substring(0, 80)}
                                         br
                                         a(href=`personal/${page._id}`, class='button') Info
-                                        a(href=`personal/${page._id}/JSON`, class='button') JSON
+                                        //- a(href=`personal/${page._id}/JSON`, class='button') JSON
