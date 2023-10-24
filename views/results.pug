@@ -16,7 +16,7 @@ html(lang='en')
                         a(href=`personal/${page._id}`, class='link_header') #{page.title}
                     br
                     p(class='inline') Search Score: #{page.searchscore.toFixed(2)}
-                    p Page Rank: #{page.pr.toFixed(2)}
+                    p Page Rank: #{page.pr}
                     a(href=page.url) #{page.url}
                     br
                     if type == 'personal'
