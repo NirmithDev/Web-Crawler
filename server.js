@@ -167,42 +167,35 @@ app.get('/personal', function (req, res) {
         return b.searchscore - a.searchscore;
     });
 
-    res.status(200).render('app', {results: page_list.slice(0,parseInt(limit)), type: 'personal'}); 
-});
-
-// Search results for personal collection in JSON
-app.get('/personal/JSON', function (req, res) {
-    let q = req.query.q;
-    let boost = req.query.boost;
-    let limit = req.query.limit;
-
-    if (limit > 50 || limit < 1) {
-        res.status(400).render('app', {search: true});
+    if(!page_list){
+        res.status(404).send("personal ID not found in store")
     }
-
-    let results = [];
-    let page_list = [];
-
-    results = personalPagesSearch.search(q,{expaned: true});
-    results.forEach((result) => {
-        p = personalPages.find(page => page._id.toString() == (result.ref));
-        p.name = 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida';
-        if (boost == 'true') {
-            p.searchscore = (result.score * p.pr);
-        } else {
-            p.searchscore = result.score;
-        }
-        page_list.push(p);
-    });
-    if (page_list.length < parseInt(limit)) {
-        page_list = appendRandomResults(page_list, parseInt(limit), personalPages);
+    else if(page_list){
+        res.format({
+            'text/plain': function () {
+                res.status(200).render('app', {results: page_list.slice(0,parseInt(limit)), type: 'fruits'});
+            },
+          
+            'text/html': function () {
+                res.status(200).render('app', {results: page_list.slice(0,parseInt(limit)), type: 'fruits'});
+            },
+          
+            'application/json': function () {
+                page_list.forEach((p) => {
+                    p.name = 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida';
+                });
+                res.status(200).send(page_list.slice(0,parseInt(limit)))
+            },
+          
+            default: function () {
+              res.status(406).send('Not Acceptable')
+            }
+        })
     }
-    page_list.sort((a, b) => {
-        return b.searchscore - a.searchscore;
-    });
-
-    res.setHeader('Content-Type', 'application/json');
-    res.status(200).json(page_list.slice(0,parseInt(limit)));
+    else{
+        res.status(406).send('This format is not supported');
+    }
+    //res.status(200).render('app', {results: page_list.slice(0,parseInt(limit)), type: 'personal'}); 
 });
 
 // View specific page data from personal collection
@@ -250,10 +243,95 @@ app.get('/fruits', function (req, res) {
     page_list.sort((a, b) => {
         return b.searchscore - a.searchscore;
     })
-
-    res.status(200).render('app', {results: page_list.slice(0,parseInt(limit)), type: 'fruits'}); 
+    if(!page_list){
+        res.status(404).send("fruits ID not found in store")
+    }
+    else if(page_list){
+        res.format({
+            'text/plain': function () {
+                res.status(200).render('app', {results: page_list.slice(0,parseInt(limit)), type: 'fruits'});
+            },
+          
+            'text/html': function () {
+                res.status(200).render('app', {results: page_list.slice(0,parseInt(limit)), type: 'fruits'});
+            },
+          
+            'application/json': function () {
+                page_list.forEach((p) => {
+                    p.name = 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida';
+                });
+                res.status(200).send(page_list.slice(0,parseInt(limit)))
+            },
+          
+            default: function () {
+              res.status(406).send('Not Acceptable')
+            }
+        })
+    }
+    else{
+        res.status(406).send('This format is not supported');
+    }
+    //res.status(200).render('app', {results: page_list.slice(0,parseInt(limit)), type: 'fruits'}); 
 });
 
+// View specific page data from fruits collection
+app.get('/fruits/:id', function (req, res) {
+    const id = req.params.id;
+    const page = fruitPages.find(page => page._id.toString() == id);
+    res.status(200).render('app', {page: page, type: 'fruits'}); 
+});
+
+// View specific page data from fruits collection in JSON
+app.get('/fruits/:id/JSON', function (req, res) {
+    const id = req.params.id;
+    const page = fruitPages.find(page => page._id.toString() == id);
+    // page.name = 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida';
+    res.setHeader('Content-Type', 'application/json');
+    res.status(200).json(page);
+});
+
+//Start the server
+app.listen(port, () => {
+    console.log(`Now listening on port ${port}`); 
+});
+
+
+
+/*
+// Search results for personal collection in JSON
+app.get('/personal/JSON', function (req, res) {
+    let q = req.query.q;
+    let boost = req.query.boost;
+    let limit = req.query.limit;
+
+    if (limit > 50 || limit < 1) {
+        res.status(400).render('app', {search: true});
+    }
+
+    let results = [];
+    let page_list = [];
+
+    results = personalPagesSearch.search(q,{expaned: true});
+    results.forEach((result) => {
+        p = personalPages.find(page => page._id.toString() == (result.ref));
+        p.name = 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida';
+        if (boost == 'true') {
+            p.searchscore = (result.score * p.pr);
+        } else {
+            p.searchscore = result.score;
+        }
+        page_list.push(p);
+    });
+    page_list.sort((a, b) => {
+        return b.searchscore - a.searchscore;
+    });
+
+    res.setHeader('Content-Type', 'application/json');
+    res.status(200).json(page_list.slice(0,parseInt(limit)));
+});
+*/
+
+/*
 // Search results for fruits collection in JSON
 app.get('/fruits/JSON', function (req, res) {
     let q = req.query.q;
@@ -288,24 +366,4 @@ app.get('/fruits/JSON', function (req, res) {
     res.setHeader('Content-Type', 'application/json');
     res.status(200).json(page_list.slice(0,parseInt(limit)));
 });
-
-// View specific page data from fruits collection
-app.get('/fruits/:id', function (req, res) {
-    const id = req.params.id;
-    const page = fruitPages.find(page => page._id.toString() == id);
-    res.status(200).render('app', {page: page, type: 'fruits'}); 
-});
-
-// View specific page data from fruits collection in JSON
-app.get('/fruits/:id/JSON', function (req, res) {
-    const id = req.params.id;
-    const page = fruitPages.find(page => page._id.toString() == id);
-    // page.name = 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida';
-    res.setHeader('Content-Type', 'application/json');
-    res.status(200).json(page);
-});
-
-//Start the server
-app.listen(port, () => {
-    console.log(`Now listening on port ${port}`); 
-});
+*/

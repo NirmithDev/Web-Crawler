@@ -34,7 +34,7 @@ html(lang='en')
                 input(type='submit', class='submit_button', id='personal_button', value="Personal")
                 input(type='submit', class='submit_button', id='fruits_button', value="Fruits")
 
-            #JSON
+            //#JSON
                 h2(class="json_header") JSON:
                 input(type='radio', class='TF', id='json_true', name='json', value='true')
                 label(for='json_true', class='TFLabel') True
@@ -43,16 +43,16 @@ html(lang='en')
 
     script.
         document.getElementById("personal_button").onclick = function() { 
-            if (document.getElementById('json_true').checked) {
-                document.getElementById("search_form").action = "personal/JSON";
-            } else {
+            //if (document.getElementById('json_true').checked) {
+            //    document.getElementById("search_form").action = "personal/JSON";
+            //} else {
                 document.getElementById("search_form").action = "personal";
-            }
+            //}
         };
         document.getElementById("fruits_button").onclick = function() { 
-            if (document.getElementById('json_true').checked) {
-                document.getElementById("search_form").action = "fruits/JSON";
-            } else {
+           // if (document.getElementById('json_true').checked) {
+           //     document.getElementById("search_form").action = "fruits/JSON";
+            //} else {
                 document.getElementById("search_form").action = "fruits";
-            }
+            //}
         };
