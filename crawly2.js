@@ -7,14 +7,12 @@ const {Matrix} = require("ml-matrix");
 const cheerio = require('cheerio');
 
 //Connection URL
-const mongourl = "mongodb+srv://johnwscaife:databasepassword@cluster0.qpyexxh.mongodb.net/?retryWrites=true&w=majority";
+const mongourl = "mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+1.10.6";
 
 //Create a MongoClient instance
 const client = new MongoClient(mongourl, { useNewUrlParser: true, useUnifiedTopology: true });
 
-let visitedLinksPersonal = new Set();
 let visitedTitlesPersonal = new Set();
-let pageCounterPersonal = 0;
 let tempDataPersonal = [];
 let visited = new Set();
 let n = 0;
@@ -46,20 +44,10 @@ async function databaseInit() {
   }
 }
 
-const ignore = new Set([
-    '/wiki/File:',
-    '/wiki/Special:',
-    '/wiki/Talk:',
-    '/wiki/User:',
-    '/wiki/Category:',
-    '/wiki/Template:',
-    '/wiki/Help:',
-    '/wiki/Portal:',
-]);
 
 const crawler = new Crawler({
     maxConnections : 10, //use this for parallel, rateLimit for individual
-    rateLimit: 1000,
+    rateLimit: 10,
 
     // This will be called for each crawled page
     callback : function (error, res, done) {
@@ -121,61 +109,88 @@ const crawler = new Crawler({
 //Perhaps a useful event
 //Triggered when the queue becomes empty
 //There are some other events, check crawler docs
+function computeEuclideanDistance(oldRanks, newRanks) {
+    let sum = 0;
+    for (let i = 0; i < oldRanks.length; i++) {
+        sum += Math.pow(newRanks[i] - oldRanks[i], 2);
+    }
+    return Math.sqrt(sum);
+}
+
+//this will be the async function that will be responsible for calculating and implementing the pageRank functionality
+async function addNEWField() {
+    const ALPHA = 0.1;
+    const N = tempDataPersonal.length;
+  
+    for (const pageData of tempDataPersonal) {
+      pageData.pr = 1 / N;
+      pageData.adjacencyMatrix = new Array(N).fill(0);
+    }
+  
+    // Create an adjacency matrix
+    for (let i = 0; i < N; i++) {
+      const pageData = tempDataPersonal[i];
+      for (let j = 0; j < N; j++) {
+        if (i !== j && pageData.outgoingLinks.includes(tempDataPersonal[j].url)) {
+          pageData.adjacencyMatrix[j] = 1;
+        } else {
+          pageData.adjacencyMatrix[j] = 0;
+        }
+      }
+    }
+  
+    const dampingFactor = 1 - ALPHA;
+    const convergenceThreshold = 0.0001;
+    const maxIterations = 1000;
+  
+    let iteration = 0;
+    let isConverged = false;
+    let prevPageRanks = new Array(N).fill(1 / N);
+  
+    while (iteration < maxIterations && !isConverged) {
+      let newPageRanks = new Array(N).fill(0);
+      let allConverged = true;
+  
+      for (let i = 0; i < N; i++) {
+        let sum = 0;
+  
+        for (let j = 0; j < N; j++) {
+          if (i !== j && tempDataPersonal[j].adjacencyMatrix[i] === 1) {
+            sum += prevPageRanks[j] / countOutgoingLinks(j);
+          }
+        }
+  
+        newPageRanks[i] = (1 - dampingFactor) / N + dampingFactor * sum;
+  
+        // Check for convergence
+        if (Math.abs(newPageRanks[i] - prevPageRanks[i]) > convergenceThreshold) {
+          allConverged = false;
+        }
+      }
+    //calculate difference
+    if (computeEuclideanDistance(prevPageRanks, newPageRanks) < convergenceThreshold) {
+        isConverged = true;
+    }
+  
+    // Update PageRank values for the next iteration
+    prevPageRanks = [...newPageRanks];
+    for (let i = 0; i < N; i++) {
+        tempDataPersonal[i].pr = newPageRanks[i];
+    }
+    iteration++;
+    }
+}
+  
+function countOutgoingLinks(index) {
+    return tempDataPersonal[index].adjacencyMatrix.reduce((count, value) => count + value, 0);
+}
+
 crawler.on('drain', async function(){
     try {
         console.log("Done!");
         console.log(`We have crawled through ${n} pages...`);
     
-        //Initialize 
-        const a = 0.1;
-
-        //Transition probability matrix
-        P = Matrix.zeros(tempDataPersonal.length, tempDataPersonal.length); // Could just do 500, 500
-
-        //PageRank vector and Convergence threshold
-        x0 = Matrix.ones(1, tempDataPersonal.length);
-        let t = 0.0001;
-        
-        // Index data for matrix building purposes
-        for(i = 0; i < tempDataPersonal.length; i++){
-            tempDataPersonal[i].index = i;
-        }
-
-        // Build transition probability matrix
-        for (i = 0; i < P.rows; i++) {
-            pageNum = tempDataPersonal[i].index; // Get index
-            linkedTo = tempDataPersonal[i].outgoingLinks; 
-            for (j = 0; j < P.columns; j++) {
-              if(linkedTo.includes(tempDataPersonal[j].url)){ // If the page is linked to a page at j, add info to matrix
-                pageNumOfLinkedTo = tempDataPersonal[j].index;
-                //The probability calculation
-                P.set(pageNum, pageNumOfLinkedTo, P.get(pageNum, pageNumOfLinkedTo) + 1/linkedTo.length); 
-              }
-            }
-        }
-
-        console.log("Transition Probability Matrix: \n", P);
-
-        difference = 10000; //Dummy value to start
-        while(difference > t){
-            x1 = x0.mmul(P);
-            difference = x0.sub(x1).abs().sum();
-            x0 = x1;
-        }
-
-        //Finish PageRank Calculation
-        x0.div(x0.sum()); // Dont know if this is needed, had this in my Lab 5 code
-        x0.mul(1 - a); // Create a 10% chance of teleportation, a is defined above as 0.1
-
-        // Add PageRank to each page!
-        for(i = 0; i < x0.size; i++) {
-            // NOT SURE if indexing is correct here! Might need a nested loop and check tempDataPersonal[j].index == i
-            tempDataPersonal[i].pr = x0.get(0, i); 
-        }
-
-        console.log("PageRank Sum: ", x0.sum());
-        console.log("PageRank Array: ", x0);
-        
+        console.log
         //before initializing the database we must create an incoming link collection
         //so we iterate over the tempCollection
         for(i=0;i<tempDataPersonal.length;i++){
@@ -194,6 +209,7 @@ crawler.on('drain', async function(){
                 //if(temp[i].url = temp[j].outgoingLinks)
             }
         }
+        await addNEWField();
         console.log('Initializing Database...');
         await databaseInit();
     } catch (err) {
