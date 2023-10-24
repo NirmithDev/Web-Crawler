@@ -7,7 +7,7 @@ const {Matrix} = require("ml-matrix");
 const cheerio = require('cheerio');
 
 //Connection URL
-const mongourl = "mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+1.10.6";
+const mongourl = "mongodb+srv://johnwscaife:databasepassword@cluster0.qpyexxh.mongodb.net/?retryWrites=true&w=majority";
 
 //Create a MongoClient instance
 const client = new MongoClient(mongourl, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -29,7 +29,6 @@ async function databaseInit() {
     const db = client.db(DBname);
 
     //Drop the existing database if it exists
-    await db.dropCollection("personalPages");
     try {
         await db.dropCollection("personalPages");
         console.log("Dropped collection.");
@@ -171,7 +170,7 @@ crawler.on('drain', async function(){
         // Add PageRank to each page!
         for(i = 0; i < x0.size; i++) {
             // NOT SURE if indexing is correct here! Might need a nested loop and check tempDataPersonal[j].index == i
-            tempDataPersonal[i].pageRank = x0.get(0, i); 
+            tempDataPersonal[i].pr = x0.get(0, i); 
         }
 
         console.log("PageRank Sum: ", x0.sum());
