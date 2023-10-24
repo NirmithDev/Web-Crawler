@@ -90,7 +90,7 @@ const crawler = new Crawler({
                 // visit everything (bfs)
                 console.log(n)
                 const summary = $('p').text()
-                let connectedPages = new Set();
+                let connectedPages = [];
                 $("a").each(function (i, link) {
                     let curLink = $(link).attr("href");
                     if (!curLink) {
@@ -99,7 +99,7 @@ const crawler = new Crawler({
                     if (curLink.startsWith("/wiki/") && !curLink.startsWith("/wiki/File:")) {
                         curLink = "https://en.wikipedia.org/" + curLink;
 
-                        connectedPages.add(curLink); 
+                        connectedPages.push(curLink); 
                         if (!visited.has(curLink) && n < 500) {
                             crawler.queue(curLink);
                             // n++
@@ -180,10 +180,10 @@ crawler.on('drain', async function(){
             pageNum = tempDataPersonal[i].index; // Get index
             linkedTo = tempDataPersonal[i].outgoingLinks; 
             for (j = 0; j < P.columns; j++) {
-              if(linkedTo.has(tempDataPersonal[j].url)){ // If the page is linked to a page at j, add info to matrix
+              if(linkedTo.includes(tempDataPersonal[j].url)){ // If the page is linked to a page at j, add info to matrix
                 pageNumOfLinkedTo = tempDataPersonal[j].index;
                 //The probability calculation
-                P.set(pageNum, pageNumOfLinkedTo, P.get(pageNum, pageNumOfLinkedTo) + 1/linkedTo.size); 
+                P.set(pageNum, pageNumOfLinkedTo, P.get(pageNum, pageNumOfLinkedTo) + 1/linkedTo.length); 
               }
             }
         }
@@ -199,7 +199,7 @@ crawler.on('drain', async function(){
 
         //Finish PageRank Calculation
         x0.div(x0.sum()); // Dont know if this is needed, had this in my Lab 5 code
-        x0.mul(1 - a); // Create a 10% chance of teleportation, a is defined abovr as 0.1
+        x0.mul(1 - a); // Create a 10% chance of teleportation, a is defined above as 0.1
 
         // Add PageRank to each page!
         for(i = 0; i < x0.size; i++) {
