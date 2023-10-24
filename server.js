@@ -40,6 +40,25 @@ const fruitPagesSearch = elasticlunr(function () {
     this.setRef('id');
 });
 
+function getRandomInt(max) {
+    return Math.floor(Math.random() * max);
+}
+
+function appendRandomResults(currentResults, limit, collection) {
+    let newResults = new Set(currentResults);
+    let collectionCopy = [...collection];
+    collectionCopy.sort((a, b) => {
+        return a.pr - b.pr;
+    });
+    while (newResults.size < limit) {
+        // let i = getRandomInt(collection.length);
+        let temp = collectionCopy.pop(0);
+        temp.searchscore = 0.00;
+        newResults.add(temp);
+    }
+    return Array.from(newResults);
+}
+
 function getWordCount(inputString) {
     const cleanedString = inputString
         .replace(/[^\w\s]|_/g, ' ') // Remove punctuation and special characters
@@ -141,6 +160,9 @@ app.get('/personal', function (req, res) {
         }
         page_list.push(p);
     });
+    if (page_list.length < parseInt(limit)) {
+        page_list = appendRandomResults(page_list, parseInt(limit), personalPages);
+    }
     page_list.sort((a, b) => {
         return b.searchscore - a.searchscore;
     });
@@ -172,6 +194,9 @@ app.get('/personal/JSON', function (req, res) {
         }
         page_list.push(p);
     });
+    if (page_list.length < parseInt(limit)) {
+        page_list = appendRandomResults(page_list, parseInt(limit), personalPages);
+    }
     page_list.sort((a, b) => {
         return b.searchscore - a.searchscore;
     });
@@ -219,6 +244,9 @@ app.get('/fruits', function (req, res) {
         }
         page_list.push(p);
     });
+    if (page_list.length < parseInt(limit)) {
+        page_list = appendRandomResults(page_list, parseInt(limit), fruitPages);
+    }
     page_list.sort((a, b) => {
         return b.searchscore - a.searchscore;
     })
@@ -250,6 +278,9 @@ app.get('/fruits/JSON', function (req, res) {
         }
         page_list.push(p);
     });
+    if (page_list.length < parseInt(limit)) {
+        page_list = appendRandomResults(page_list, parseInt(limit), fruitPages);
+    }
     page_list.sort((a, b) => {
         return b.searchscore - a.searchscore;
     });

@@ -7,7 +7,7 @@ const {Matrix} = require("ml-matrix");
 const cheerio = require('cheerio');
 
 //Connection URL
-const mongourl = "mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+1.10.6";
+const mongourl = "mongodb+srv://johnwscaife:databasepassword@cluster0.qpyexxh.mongodb.net/?retryWrites=true&w=majority";
 
 //Create a MongoClient instance
 const client = new MongoClient(mongourl, { useNewUrlParser: true, useUnifiedTopology: true });
