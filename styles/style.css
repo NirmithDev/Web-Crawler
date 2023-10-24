@@ -215,6 +215,18 @@ p {
     width: 95vw;
 }
 
+#SquareBorder2 {
+    border-width: 3px;
+    border-color: black;
+    border-style: solid;
+    border-radius: 10px;
+    padding-left: 15px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    width: 47vw;
+    height: 17vh;
+}
+
 h1.page_title {
     color: white;
     margin-bottom: 10px;
@@ -232,3 +244,15 @@ h1.page_title {
 h2.json_header {
     display: inline;
 }
+
+.flex-container {
+    display: flex;
+}
+
+.flex-child {
+    flex: 1;
+}  
+
+.flex-child:first-child {
+    margin-right: 20px;
+} 

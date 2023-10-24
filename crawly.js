@@ -34,7 +34,7 @@ async function databaseInit() {
 
     //Drop the existing database if it exists
     try {
-        await db.dropCollection("personalPages");
+        await db.dropCollection("pages");
         console.log("Dropped collection.");
     } catch (err) {
         console.log("Failed to drop collection: " + err.message);

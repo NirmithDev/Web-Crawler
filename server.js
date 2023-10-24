@@ -78,21 +78,23 @@ async function connectToDatabase() {
         fruitPages = await fruitCollection.find({}).toArray();
 
         personalPages.forEach(function (p) {
+            // console.log(p);
             personalPagesSearch.addDoc({
                 id: p._id.toString(),
                 title: p.title || '',
                 paragraphs: p.paragraphs || '',
-                pr: p.pr || parseFlaot(0)
+                pr: p.pr || parseFloat(0)
             });
 
             p.wordCount = getWordCount(p.paragraphs);
         });
         fruitPages.forEach(function (p) {
+            // console.log(p);
             fruitPagesSearch.addDoc({
                 id: p._id.toString(),
                 title: p.title || '',
                 paragraphs: p.paragraphs || '',
-                pr: p.pr || parseFlaot(0)
+                pr: p.pr || parseFloat(0)
             });
 
             p.wordCount = getWordCount(p.paragraphs);
@@ -107,7 +109,7 @@ connectToDatabase();
 
 // Render the home page
 app.get('/', function (req, res) {
-    res.status(200).render('app'); 
+    res.status(200).render('app', {home: true, fruit_pages: fruitPages, personal_pages: personalPages}); 
 });
 
 // Render the search page
@@ -125,7 +127,7 @@ app.get('/personal', function (req, res) {
     let page_list = [];
 
     if (boost == 'true') {
-        results = personalPagesSearch.search(q, {expand: true});
+        results = personalPagesSearch.search(q, {});
         results.forEach((result) => {
             p = personalPages.find(page => page._id.toString() == (result.ref));
             p.searchscore = (result.score * p.pr);
@@ -135,7 +137,7 @@ app.get('/personal', function (req, res) {
             return b.searchscore - a.searchscore;
         })
     } else {
-        results = personalPagesSearch.search(q, {expand: true});
+        results = personalPagesSearch.search(q, {});
         results.forEach((result) => {
             p = personalPages.find(page => page._id.toString() == (result.ref));
             p.searchscore = result.score;
@@ -155,7 +157,7 @@ app.get('/personal/JSON', function (req, res) {
     let page_list = [];
 
     if (boost == 'true') {
-        results = personalPagesSearch.search(q, {expand: true});
+        results = personalPagesSearch.search(q,{});
         results.forEach((result) => {
             p = personalPages.find(page => page._id.toString() == (result.ref));
             p.name = 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida';
@@ -166,7 +168,7 @@ app.get('/personal/JSON', function (req, res) {
             return b.searchscore - a.searchscore;
         })
     } else {
-        results = personalPagesSearch.search(q, {expand: true});
+        results = personalPagesSearch.search(q,{});
         results.forEach((result) => {
             p = personalPages.find(page => page._id.toString() == (result.ref));
             p.name = 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida';
@@ -217,7 +219,7 @@ app.get('/fruits', function (req, res) {
     let page_list = [];
 
     if (boost == 'true') {
-        results = fruitPagesSearch.search(q, {expand: true});
+        results = fruitPagesSearch.search(q, {});
         results.forEach((result) => {
             p = fruitPages.find(page => page._id.toString() == (result.ref));
             p.searchscore = (result.score * p.pr);
@@ -227,7 +229,7 @@ app.get('/fruits', function (req, res) {
             return b.searchscore - a.searchscore;
         })
     } else {
-        results = fruitPagesSearch.search(q, {expand: true});
+        results = fruitPagesSearch.search(q, {});
         results.forEach((result) => {
             p = fruitPages.find(page => page._id.toString() == (result.ref));
             p.searchscore = result.score;
@@ -247,7 +249,7 @@ app.get('/fruits/JSON', function (req, res) {
     let page_list = [];
 
     if (boost == 'true') {
-        results = fruitPagesSearch.search(q, {expand: true});
+        results = fruitPagesSearch.search(q, {});
         results.forEach((result) => {
             p = fruitPages.find(page => page._id.toString() == (result.ref));
             p.name = 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida';
@@ -258,7 +260,7 @@ app.get('/fruits/JSON', function (req, res) {
             return b.searchscore - a.searchscore;
         })
     } else {
-        results = fruitPagesSearch.search(q, {expand: true});
+        results = fruitPagesSearch.search(q, {});
         results.forEach((result) => {
             p = fruitPages.find(page => page._id.toString() == (result.ref));
             p.name = 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida';
