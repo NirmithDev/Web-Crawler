@@ -113,39 +113,6 @@ const crawler = new Crawler({
                     outgoingLinks: connectedPages
                 }
                 tempDataPersonal.push(curData);
-            /*if ((!visitedTitlesPersonal.has(curTitle) || !visitedLinksPersonal.has(curLink))) {
-                visitedLinksPersonal.add(curLink);
-                visitedTitlesPersonal.add(curTitle);
-                const summary = $('p').text()
-                //console.log(summary)
-                let connectedPages = [];
-                pageCounterPersonal++;
-                console.log(pageCounterPersonal)
-                $("a").each(function (i, link) {
-                    //console.log(link)
-                    const href = $(link).attr("href");
-                    if (!curLink) {
-                        return;
-                    }
-                    //if(href.includes("/wiki/") && !ignore.has(href) && !href.includes("/Template") && !href.includes(".jpg") && !href.includes("/File")&& !href.includes("/Help") && !href.includes("/Special") && !href.includes("/Wikipedia")){
-                        //clear out  unwanted links
-                    //console.log(href)
-                    if(!ignore.has(href) &&
-                    !href.startsWith("/wiki/File:")){
-                        //console.log(href)
-                        const absoluteUrl = url.resolve(res.request.uri.href, href);
-                        crawler.queue(absoluteUrl)
-                        //connectedPages.push(absoluteUrl)
-                    }
-                })
-                curData = {
-                    url: curLink,
-                    title: curTitle,
-                    paragraphs: summary,
-                    outgoingLinks: connectedPages
-                }
-                tempDataPersonal.push(curData);
-            }*/
         }
         }
         done();
