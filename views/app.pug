@@ -28,7 +28,7 @@ html(lang='en')
                                         else
                                             a(href=`fruits/${page._id}`, class='link_header') #{page.title.substring(0, 70)}
                                         br
-                                        p Page Rank: #{page.pr.toFixed(2)}
+                                        p Page Rank: #{page.pr}
                                         if page.url.substring(0, 80).length < page.url.length
                                             a(href=page.url) #{page.url.substring(0, 80)}...
                                         else
@@ -46,7 +46,7 @@ html(lang='en')
                                         else
                                             a(href=`personal/${page._id}`, class='link_header') #{page.title.substring(0, 70)}
                                         br
-                                        p Page Rank: #{page.pr.toFixed(2)}
+                                        p Page Rank: #{page.pr}
                                         if page.url.substring(0, 80).length < page.url.length
                                             a(href=page.url) #{page.url.substring(0, 80)}...
                                         else
