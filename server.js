@@ -231,13 +231,13 @@ app.get('/personal/:id', function (req, res) {
 });
 
 // View specific page data from personal collection in JSON
-app.get('/personal/:id/JSON', function (req, res) {
-    const id = req.params.id;
-    const page = personalPages.find(page => page._id.toString() == id);
-    // page.name = 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida';
-    res.setHeader('Content-Type', 'application/json');
-    res.status(200).json(page);
-}); 
+// app.get('/personal/:id/JSON', function (req, res) {
+//     const id = req.params.id;
+//     const page = personalPages.find(page => page._id.toString() == id);
+//     // page.name = 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida';
+//     res.setHeader('Content-Type', 'application/json');
+//     res.status(200).json(page);
+// }); 
 
 // Search results for fruits collection
 app.get('/fruits', function (req, res) {
@@ -321,13 +321,13 @@ app.get('/fruits/:id', function (req, res) {
 });
 
 // View specific page data from fruits collection in JSON
-app.get('/fruits/:id/JSON', function (req, res) {
-    const id = req.params.id;
-    const page = fruitPages.find(page => page._id.toString() == id);
-    // page.name = 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida';
-    res.setHeader('Content-Type', 'application/json');
-    res.status(200).json(page);
-});
+// app.get('/fruits/:id/JSON', function (req, res) {
+//     const id = req.params.id;
+//     const page = fruitPages.find(page => page._id.toString() == id);
+//     // page.name = 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida';
+//     res.setHeader('Content-Type', 'application/json');
+//     res.status(200).json(page);
+// });
 
 //Start the server
 app.listen(port, () => {
