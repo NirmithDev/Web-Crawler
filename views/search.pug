@@ -6,6 +6,8 @@ html(lang='en')
 
     body
         #Search
+            if error 
+                p #{error}
             form(id='search_form', class='search_form', method='GET', action='personal')
                 h2 Query: 
                 textarea(id='q', wrap='soft', name='q', rows='7', cols='50')

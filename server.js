@@ -140,60 +140,73 @@ app.get('/search', function (req, res) {
 // Search results for personal collection
 app.get('/personal', function (req, res) {
     let q = req.query.q;
-    let boost = req.query.boost;
-    let limit = req.query.limit;
-
-    if (limit > 50 || limit < 1) {
-        res.status(400).render('app', {search: true});
-    }
-
-    let results = [];
-    let page_list = [];
-
-    results = personalPagesSearch.search(q, {expaned: true});
-    results.forEach((result) => {
-        p = personalPages.find(page => page._id.toString() == (result.ref));
-        if (boost == 'true') {
-            p.searchscore = (result.score * p.pr);
-        } else {
-            p.searchscore = result.score;
+    let boost = req.query.boost||'false';
+    let limit = req.query.limit||10;
+    if(q==""){
+        console.log("EMPTY INPUT NO BUENO")
+        res.status(200).render('app', {search: true,error:"NO EMPTY INPUT"});
+    }else{
+        if (limit > 50 || limit < 1) {
+            res.status(400).render('app', {search: true});
         }
-        page_list.push(p);
-    });
-    if (page_list.length < parseInt(limit)) {
-        page_list = appendRandomResults(page_list, parseInt(limit), personalPages);
-    }
-    page_list.sort((a, b) => {
-        return b.searchscore - a.searchscore;
-    });
 
-    if(!page_list){
-        res.status(404).send("personal ID not found in store")
-    }
-    else if(page_list){
-        res.format({
-            'text/plain': function () {
-                res.status(200).render('app', {results: page_list.slice(0,parseInt(limit)), type: 'fruits'});
-            },
-          
-            'text/html': function () {
-                res.status(200).render('app', {results: page_list.slice(0,parseInt(limit)), type: 'fruits'});
-            },
-          
-            'application/json': function () {
-                page_list.forEach((p) => {
-                    p.name = 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida';
-                });
-                res.status(200).send(page_list.slice(0,parseInt(limit)))
-            },
-          
-            default: function () {
-              res.status(406).send('Not Acceptable')
+        let results = [];
+        let page_list = [];
+
+        results = personalPagesSearch.search(q, {expaned: true});
+        results.forEach((result) => {
+            p = personalPages.find(page => page._id.toString() == (result.ref));
+            if (boost == 'true') {
+                p.searchscore = (result.score * p.pr);
+            } else {
+                p.searchscore = result.score;
             }
-        })
-    }
-    else{
-        res.status(406).send('This format is not supported');
+            page_list.push(p);
+        });
+        if (page_list.length < parseInt(limit)) {
+            page_list = appendRandomResults(page_list, parseInt(limit), personalPages);
+        }
+        page_list.sort((a, b) => {
+            return b.searchscore - a.searchscore;
+        });
+
+        if(!page_list){
+            res.status(404).send("personal ID not found in store")
+        }
+        else if(page_list){
+            res.format({
+                'text/plain': function () {
+                    res.status(200).render('app', {results: page_list.slice(0,parseInt(limit)), type: 'fruits'});
+                },
+            
+                'text/html': function () {
+                    res.status(200).render('app', {results: page_list.slice(0,parseInt(limit)), type: 'fruits'});
+                },
+            
+                'application/json': function () {
+                    let sliceData=page_list.slice(0,parseInt(limit));
+                    output=[]
+                    sliceData.forEach((p) => {
+                        output.push({
+                            name:'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida',
+                            url:p.url,
+                            score:p.searchscore,
+                            title:p.title,
+                            pr:p.pr,
+                        })
+                        //p.name = 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida';
+                    });
+                    res.status(200).send(output)
+                },
+            
+                default: function () {
+                res.status(406).send('Not Acceptable')
+                }
+            })
+        }
+        else{
+            res.status(406).send('This format is not supported');
+        }
     }
     //res.status(200).render('app', {results: page_list.slice(0,parseInt(limit)), type: 'personal'}); 
 });
@@ -217,61 +230,75 @@ app.get('/personal/:id/JSON', function (req, res) {
 // Search results for fruits collection
 app.get('/fruits', function (req, res) {
     let q = req.query.q;
-    let boost = req.query.boost;
-    let limit = req.query.limit;
+    let boost = req.query.boost||'false';
+    let limit = req.query.limit||10;
+    if(q==""){
+        console.log("EMPTY INPUT NO BUENO")
+        res.status(200).render('app', {search: true,error:"NO EMPTY INPUT"});
+    }else{
 
-    if (limit > 50 || limit < 1) {
-        res.status(400).render('app', {search: true});
-    }
-
-    let results = [];
-    let page_list = [];
-
-    results = fruitPagesSearch.search(q, {expand: true});
-    results.forEach((result) => {
-        p = fruitPages.find(page => page._id.toString() == (result.ref));
-        if (boost == 'true') {
-            p.searchscore = (result.score * p.pr);
-        } else {
-            p.searchscore = result.score;
+        if (limit > 50 || limit < 1) {
+            res.status(400).render('app', {search: true});
         }
-        page_list.push(p);
-    });
-    if (page_list.length < parseInt(limit)) {
-        page_list = appendRandomResults(page_list, parseInt(limit), fruitPages);
-    }
-    page_list.sort((a, b) => {
-        return b.searchscore - a.searchscore;
-    })
-    if(!page_list){
-        res.status(404).send("fruits ID not found in store")
-    }
-    else if(page_list){
-        res.format({
-            'text/plain': function () {
-                res.status(200).render('app', {results: page_list.slice(0,parseInt(limit)), type: 'fruits'});
-            },
-          
-            'text/html': function () {
-                res.status(200).render('app', {results: page_list.slice(0,parseInt(limit)), type: 'fruits'});
-            },
-          
-            'application/json': function () {
-                page_list.forEach((p) => {
-                    p.name = 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida';
-                });
-                res.status(200).send(page_list.slice(0,parseInt(limit)))
-            },
-          
-            default: function () {
-              res.status(406).send('Not Acceptable')
+
+        let results = [];
+        let page_list = [];
+
+        results = fruitPagesSearch.search(q, {expand: true});
+        results.forEach((result) => {
+            p = fruitPages.find(page => page._id.toString() == (result.ref));
+            if (boost == 'true') {
+                p.searchscore = (result.score * p.pr);
+            }else{
+                p.searchscore=result.score
             }
+            page_list.push(p);
+        });
+        if (page_list.length < parseInt(limit)) {
+            page_list = appendRandomResults(page_list, parseInt(limit), fruitPages);
+        }
+        page_list.sort((a, b) => {
+            return b.searchscore - a.searchscore;
         })
-    }
-    else{
-        res.status(406).send('This format is not supported');
-    }
+        if(!page_list){
+            res.status(404).send("fruits ID not found in store")
+        }
+        else if(page_list){
+            res.format({
+                'text/plain': function () {
+                    res.status(200).render('app', {results: page_list.slice(0,parseInt(limit)), type: 'fruits'});
+                },
+            
+                'text/html': function () {
+                    res.status(200).render('app', {results: page_list.slice(0,parseInt(limit)), type: 'fruits'});
+                },
+            
+                'application/json': function () {
+                    let sliceData=page_list.slice(0,parseInt(limit));
+                    output=[]
+                    sliceData.forEach((p) => {
+                        output.push({
+                            name:'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida',
+                            url:p.url,
+                            score:p.searchscore,
+                            title:p.title,
+                            pr:p.pr,
+                        })
+                        //p.name = 'Johnathan Scaife,  Ali Hassan Sharif,  Nirmith D\'Almeida';
+                    });
+                    res.status(200).send(output)
+                },
+            
+                default: function () {
+                res.status(406).send('Not Acceptable')
+                }
+            })
+        }
+        else{
+            res.status(406).send('This format is not supported');
+        }
     //res.status(200).render('app', {results: page_list.slice(0,parseInt(limit)), type: 'fruits'}); 
+    }
 });
 
 // View specific page data from fruits collection
