@@ -2,6 +2,7 @@ const express = require('express');
 const pug = require('pug');
 const { MongoClient, ObjectId } = require("mongodb");
 const elasticlunr = require("elasticlunr");
+const axios = require('axios');
 
 const app = express();
 app.use(express.urlencoded({ extended: true }));
@@ -322,6 +323,15 @@ app.listen(port, () => {
     console.log(`Now listening on port ${port}`); 
 });
 
+
+// Make a PUT request
+axios.put('http://134.117.130.17:3000/searchengines', {request_url: 'http://134.117.135.26:3000/'})
+    .then((response) => {
+        console.log('PUT request successful');
+        console.log(response.data);
+    }).catch((error) => {
+        console.error('Error making PUT request:', error);
+    });
 
 
 /*
