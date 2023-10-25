@@ -124,10 +124,21 @@ async function connectToDatabase() {
         console.error("Error connecting to the database:", err);
     }
     console.log("Database information retrieved");
+    // Make a PUT request
 }
 
-connectToDatabase();
-
+async function searchEngine(){
+    await connectToDatabase();
+    axios.put('http://134.117.130.17:3000/searchengines', {request_url: 'http://134.117.135.26:3000/'}, {'Content-Type': 'application/json'})
+    .then((response) => {
+        
+        console.log('PUT request successful');
+        console.log(response.data);
+    }).catch((error) => {
+        console.error('Error making PUT request:', error);
+    });
+}
+searchEngine()
 // Render the home page
 app.get('/', function (req, res) {
     res.status(200).render('app', {home: true, fruit_pages: fruitPages, personal_pages: personalPages}); 
@@ -324,14 +335,6 @@ app.listen(port, () => {
 });
 
 
-// Make a PUT request
-axios.put('http://134.117.130.17:3000/searchengines', {request_url: 'http://134.117.135.26:3000/'}, {'Content-Type': 'application/json'})
-    .then((response) => {
-        console.log('PUT request successful');
-        console.log(response.data);
-    }).catch((error) => {
-        console.error('Error making PUT request:', error);
-    });
 
 
 /*
