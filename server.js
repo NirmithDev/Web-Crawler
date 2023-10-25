@@ -129,7 +129,7 @@ async function connectToDatabase() {
 
 async function searchEngine(){
     await connectToDatabase();
-    axios.put('http://134.117.130.17:3000/searchengines', {request_url: 'http://134.117.135.26:3000/'}, {'Content-Type': 'application/json'})
+    axios.put('http://134.117.130.17:3000/searchengines', {request_url: 'http://134.117.135.26:3000'}, {'Content-Type': 'application/json'})
     .then((response) => {
         
         console.log('PUT request successful');
@@ -333,8 +333,6 @@ app.get('/fruits/:id/JSON', function (req, res) {
 app.listen(port, () => {
     console.log(`Now listening on port ${port}`); 
 });
-
-
 
 
 /*
