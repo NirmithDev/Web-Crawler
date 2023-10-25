@@ -325,7 +325,7 @@ app.listen(port, () => {
 
 
 // Make a PUT request
-axios.put('http://134.117.130.17:3000/searchengines', {request_url: 'http://134.117.135.26:3000/'})
+axios.put('http://134.117.130.17:3000/searchengines', {request_url: 'http://134.117.135.26:3000/'}, {'Content-Type': 'application/json'})
     .then((response) => {
         console.log('PUT request successful');
         console.log(response.data);
