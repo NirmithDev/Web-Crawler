@@ -188,11 +188,11 @@ app.get('/personal', function (req, res) {
         else if(page_list){
             res.format({
                 'text/plain': function () {
-                    res.status(200).render('app', {results: page_list.slice(0,parseInt(limit)), type: 'fruits'});
+                    res.status(200).render('app', {results: page_list.slice(0,parseInt(limit)), type: 'personal'});
                 },
             
                 'text/html': function () {
-                    res.status(200).render('app', {results: page_list.slice(0,parseInt(limit)), type: 'fruits'});
+                    res.status(200).render('app', {results: page_list.slice(0,parseInt(limit)), type: 'personal'});
                 },
             
                 'application/json': function () {
