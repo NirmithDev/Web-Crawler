@@ -1,5 +1,8 @@
 # COMP 4601 Assignment
 
+## NOTE FOR TESTING
+crawly.js is the crawler for fruits, and crawly2 is the crawler for personal (wiki) pages. You can run them seperately, and they will create two different collections in the same database.
+
 ## Group Members
 
 Nirmith D'Almeida 101160124 nirmithdalmeida@cmail.carleton.ca
