@@ -165,7 +165,7 @@ app.get('/personal', function (req, res) {
         let results = [];
         let page_list = [];
 
-        results = personalPagesSearch.search(q, {expaned: true});
+        results = personalPagesSearch.search(q, {expand: true});
         results.forEach((result) => {
             p = personalPages.find(page => page._id.toString() == (result.ref));
             if (boost == 'true') {
